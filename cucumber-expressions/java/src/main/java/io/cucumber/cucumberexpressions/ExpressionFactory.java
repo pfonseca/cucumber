@@ -1,7 +1,6 @@
 package io.cucumber.cucumberexpressions;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,27 +23,35 @@ public class ExpressionFactory {
         this.parameterTypeRegistry = parameterTypeRegistry;
     }
 
-    public Expression createExpression(String expressionString, List<Type> types) {
+    public Expression createExpression(String expressionString, Type tableType) {
+        return createExpression(expressionString, parameterTypeRegistry.lookupTableTypeByType(tableType));
+    }
+
+    public Expression createExpression(String expressionString, String tableType) {
+        return createExpression(expressionString, parameterTypeRegistry.lookupTableTypeByName(tableType));
+    }
+
+    private Expression createExpression(String expressionString, TableType tableType) {
         Matcher m = BEGIN_ANCHOR.matcher(expressionString);
         if (m.find()) {
-            return new RegularExpression(Pattern.compile(expressionString), parameterTypeRegistry);
+            return new RegularExpression(Pattern.compile(expressionString), tableType, parameterTypeRegistry);
         }
         m = END_ANCHOR.matcher(expressionString);
         if (m.find()) {
-            return new RegularExpression(Pattern.compile(expressionString), parameterTypeRegistry);
+            return new RegularExpression(Pattern.compile(expressionString), tableType, parameterTypeRegistry);
         }
         m = SCRIPT_STYLE_REGEXP.matcher(expressionString);
         if (m.find()) {
-            return new RegularExpression(Pattern.compile(m.group(1)), parameterTypeRegistry);
+            return new RegularExpression(Pattern.compile(m.group(1)), tableType, parameterTypeRegistry);
         }
         m = PARENS.matcher(expressionString);
         if (m.find()) {
             String insideParens = m.group(1);
             if (ALPHA.matcher(insideParens).lookingAt()) {
-                return new CucumberExpression(expressionString, parameterTypeRegistry);
+                return new CucumberExpression(expressionString, tableType, parameterTypeRegistry);
             }
-            return new RegularExpression(Pattern.compile(expressionString), parameterTypeRegistry);
+            return new RegularExpression(Pattern.compile(expressionString), tableType, parameterTypeRegistry);
         }
-        return new CucumberExpression(expressionString, parameterTypeRegistry);
+        return new CucumberExpression(expressionString, tableType, parameterTypeRegistry);
     }
 }

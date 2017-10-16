@@ -1,6 +1,6 @@
 package io.cucumber.cucumberexpressions;
 
-public class SingleTransformer<T> implements Transformer<T> {
+public class SingleTransformer<T> implements Transformer<String[], T> {
     private final Function<String, T> function;
 
     public SingleTransformer(Function<String, T> function) {
@@ -8,7 +8,7 @@ public class SingleTransformer<T> implements Transformer<T> {
     }
 
     @Override
-    public T transform(String... groupValues) {
+    public T transform(String[] groupValues) {
         if (groupValues == null) return null;
         String arg = null;
         for (String groupValue : groupValues) {

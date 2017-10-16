@@ -1,5 +1,6 @@
 package io.cucumber.cucumberexpressions;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
@@ -18,6 +19,9 @@ public class ParameterTypeRegistry {
 
     private final Map<String, ParameterType<?>> parameterTypeByName = new HashMap<>();
     private final Map<String, SortedSet<ParameterType<?>>> parameterTypesByRegexp = new HashMap<>();
+    private final Map<Type, ParameterType<?>> parameterTypeByType = new HashMap<>(); //TODO: Should be Map<Type, List<ParameterType<?>>
+    private final Map<String, TableType<?>> tableTypeByName = new HashMap<>();
+    private final Map<String, TableType<?>> tableTypeByType = new HashMap<>(); //TODO: Should be Map<String, List<TableType<?>>
 
     public ParameterTypeRegistry(Locale locale) {
         NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
@@ -83,15 +87,23 @@ public class ParameterTypeRegistry {
                 return s.replaceAll("\\\\\"", "\"").replaceAll("\\\\'", "'");
             }
         }), true, false));
+
+        defineDataTableType(new TableType<>("table", DataTable.class, new Transformer<DataTable, DataTable>() {
+            @Override
+            public DataTable transform(DataTable t) {
+                return t;
+            }
+        }));
     }
 
     public void defineParameterType(ParameterType<?> parameterType) {
         if (parameterTypeByName.containsKey(parameterType.getName()))
             throw new DuplicateTypeNameException(String.format("There is already a parameter type with name %s", parameterType.getName()));
         parameterTypeByName.put(parameterType.getName(), parameterType);
+        parameterTypeByType.put(parameterType.getType(), parameterType);
 
         for (String parameterTypeRegexp : parameterType.getRegexps()) {
-            if(parameterTypesByRegexp.get(parameterTypeRegexp) == null){
+            if (parameterTypesByRegexp.get(parameterTypeRegexp) == null) {
                 parameterTypesByRegexp.put(parameterTypeRegexp, new TreeSet<ParameterType<?>>());
             }
             SortedSet<ParameterType<?>> parameterTypes = parameterTypesByRegexp.get(parameterTypeRegexp);
@@ -106,8 +118,31 @@ public class ParameterTypeRegistry {
         }
     }
 
+    public void defineDataTableType(TableType<?> tableType) {
+        if (tableTypeByName.containsKey(tableType.getName()))
+            throw new DuplicateTypeNameException(String.format("There is already a data table type with name %s", tableType.getName()));
+
+        tableTypeByName.put(tableType.getName(), tableType);
+        tableTypeByType.put(tableType.getType().toString(), tableType);
+    }
+
     public <T> ParameterType<T> lookupByTypeName(String typeName) {
         return (ParameterType<T>) parameterTypeByName.get(typeName);
+    }
+
+    public <T> ParameterType<T> lookupByType(Type type) {
+        // TODO: Disamiguation
+        return (ParameterType<T>) parameterTypeByType.get(type);
+    }
+
+    public <T> TableType<T> lookupTableTypeByType(Type rowType) {
+        // TODO: Disamiguation
+        return (TableType<T>) tableTypeByType.get(rowType.toString());
+    }
+
+
+    public <T> TableType<T> lookupTableTypeByName(String tableType) {
+        return (TableType<T>) tableTypeByName.get(tableType);
     }
 
     public <T> ParameterType<T> lookupByRegexp(String parameterTypeRegexp, Pattern expressionRegexp, String text) {
@@ -126,4 +161,6 @@ public class ParameterTypeRegistry {
     public Collection<ParameterType<?>> getParameterTypes() {
         return parameterTypeByName.values();
     }
+
+
 }

@@ -45,7 +45,7 @@ public class CucumberExpressionPatternTest {
     }
 
     private void assertPattern(String expr, String expectedRegexp) {
-        CucumberExpression cucumberExpression = new CucumberExpression(expr, new ParameterTypeRegistry(Locale.ENGLISH));
+        CucumberExpression cucumberExpression = new CucumberExpression(expr, null, new ParameterTypeRegistry(Locale.ENGLISH));
         assertEquals(expectedRegexp, cucumberExpression.getRegexp().pattern());
     }
 }

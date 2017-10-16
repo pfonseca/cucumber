@@ -19,8 +19,8 @@ public class CucumberExpressionTest {
 
         /// [capture-match-arguments]
         String expr = "I have {int} cuke(s)";
-        Expression expression = new CucumberExpression(expr, parameterTypeRegistry);
-        List<Argument<?>> args = expression.match("I have 7 cukes");
+        Expression expression = new CucumberExpression(expr, null, parameterTypeRegistry);
+        List<Argument<?>> args = expression.match("I have 7 cukes", null);
         assertEquals(7, args.get(0).getValue());
         /// [capture-match-arguments]
     }
@@ -94,7 +94,7 @@ public class CucumberExpressionTest {
     @Test
     public void exposes_source() {
         String expr = "I have {int} cuke(s)";
-        assertEquals(expr, new CucumberExpression(expr, new ParameterTypeRegistry(Locale.ENGLISH)).getSource());
+        assertEquals(expr, new CucumberExpression(expr, null, new ParameterTypeRegistry(Locale.ENGLISH)).getSource());
     }
 
     // Java-specific
@@ -135,8 +135,8 @@ public class CucumberExpressionTest {
     }
 
     private List<?> match(String expr, String text, Locale locale) {
-        CucumberExpression expression = new CucumberExpression(expr, new ParameterTypeRegistry(locale));
-        List<Argument<?>> args = expression.match(text);
+        CucumberExpression expression = new CucumberExpression(expr, null, new ParameterTypeRegistry(locale));
+        List<Argument<?>> args = expression.match(text, null);
         if (args == null) {
             return null;
         } else {

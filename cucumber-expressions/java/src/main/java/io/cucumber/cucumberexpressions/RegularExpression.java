@@ -13,18 +13,18 @@ public class RegularExpression implements Expression {
      * Creates a new instance. Use this when the transform types are not known in advance,
      * and should be determined by the regular expression's capture groups. Use this with
      * dynamically typed languages.
-     *
-     * @param expressionRegexp      the regular expression to use
+     *  @param expressionRegexp      the regular expression to use
+     * @param tableType
      * @param parameterTypeRegistry used to look up parameter types
      */
-    public RegularExpression(Pattern expressionRegexp, ParameterTypeRegistry parameterTypeRegistry) {
+    public RegularExpression(Pattern expressionRegexp, TableType tableType, ParameterTypeRegistry parameterTypeRegistry) {
         this.expressionRegexp = expressionRegexp;
         this.parameterTypeRegistry = parameterTypeRegistry;
         treeRegexp = new TreeRegexp(expressionRegexp);
     }
 
     @Override
-    public List<Argument<?>> match(String text) {
+    public List<Argument<?>> match(String text, DataTable arguments) {
         List<ParameterType<?>> parameterTypes = new ArrayList<>();
         for(GroupBuilder groupBuilder : treeRegexp.getGroupBuilder().getChildren()){
             String parameterTypeRegexp = groupBuilder.getSource();
@@ -44,7 +44,7 @@ public class RegularExpression implements Expression {
             parameterTypes.add(parameterType);
         }
 
-        return Argument.build(treeRegexp, parameterTypes, text);
+        return ExpressionArgument.build(treeRegexp, parameterTypes, text);
     }
 
 

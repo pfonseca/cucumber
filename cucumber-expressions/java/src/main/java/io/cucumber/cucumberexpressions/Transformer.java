@@ -1,5 +1,5 @@
 package io.cucumber.cucumberexpressions;
 
-public interface Transformer<T> {
-    T transform(String... groupValues);
+public interface Transformer<F,T> {
+    T transform(F values);
 }
