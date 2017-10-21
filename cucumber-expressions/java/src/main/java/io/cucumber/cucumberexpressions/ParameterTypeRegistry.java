@@ -1,5 +1,7 @@
 package io.cucumber.cucumberexpressions;
 
+import io.cucumber.datatable.DataTable;
+
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -94,6 +96,7 @@ public class ParameterTypeRegistry {
                 return t;
             }
         }));
+
     }
 
     public void defineParameterType(ParameterType<?> parameterType) {
@@ -135,15 +138,15 @@ public class ParameterTypeRegistry {
         return (ParameterType<T>) parameterTypeByType.get(type);
     }
 
-    public <T> TableType<T> lookupTableTypeByType(Type rowType) {
-        // TODO: Disamiguation
-        return (TableType<T>) tableTypeByType.get(rowType.toString());
+    public <T> TableType<T> lookupTableTypeByType(final Type tableType) {
+        return (TableType<T>)  tableTypeByType.get(tableType.toString());
     }
 
 
     public <T> TableType<T> lookupTableTypeByName(String tableType) {
         return (TableType<T>) tableTypeByName.get(tableType);
     }
+
 
     public <T> ParameterType<T> lookupByRegexp(String parameterTypeRegexp, Pattern expressionRegexp, String text) {
         SortedSet<ParameterType<?>> parameterTypes = parameterTypesByRegexp.get(parameterTypeRegexp);
@@ -161,6 +164,6 @@ public class ParameterTypeRegistry {
     public Collection<ParameterType<?>> getParameterTypes() {
         return parameterTypeByName.values();
     }
-
-
 }
+
+

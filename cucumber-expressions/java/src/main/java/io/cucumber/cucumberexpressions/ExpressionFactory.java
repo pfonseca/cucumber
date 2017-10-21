@@ -1,6 +1,10 @@
 package io.cucumber.cucumberexpressions;
 
+import io.cucumber.datatable.DataTable;
+import io.cucumber.datatable.ParameterTypeRegistryTableConverter;
+
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,20 +22,42 @@ public class ExpressionFactory {
     private static final Pattern PARENS = Pattern.compile("\\(([^)]+)\\)");
     private static final Pattern ALPHA = Pattern.compile("[a-zA-Z]+");
     private final ParameterTypeRegistry parameterTypeRegistry;
+    private final ParameterTypeRegistryTableConverter tableConverter;
 
     public ExpressionFactory(ParameterTypeRegistry parameterTypeRegistry) {
         this.parameterTypeRegistry = parameterTypeRegistry;
+        this.tableConverter = new ParameterTypeRegistryTableConverter(parameterTypeRegistry);
     }
 
-    public Expression createExpression(String expressionString, Type tableType) {
-        return createExpression(expressionString, parameterTypeRegistry.lookupTableTypeByType(tableType));
+    public Expression createExpression(String expressionString, final Type tableType) {
+        if (tableType == null) throw new CucumberExpressionException("tableType can not be null");
+
+        return createExpression(expressionString, new Transformer<List<List<String>>, Object>() {
+            @Override
+            public Object transform(List<List<String>> raw) {
+                return new DataTable(raw, tableConverter).convert(tableType, false);
+            }
+        });
     }
 
-    public Expression createExpression(String expressionString, String tableType) {
-        return createExpression(expressionString, parameterTypeRegistry.lookupTableTypeByName(tableType));
+    public Expression createExpression(String expressionString, final String tableType) {
+        if (tableType == null) throw new CucumberExpressionException("tableType can not be null");
+
+        final TableType<?> type = parameterTypeRegistry.lookupTableTypeByName(tableType);
+
+        if (type == null) {
+            throw new UndefinedTableTypeException(tableType);
+        }
+
+        return createExpression(expressionString, new Transformer<List<List<String>>, Object>() {
+            @Override
+            public Object transform(List<List<String>> raw) {
+                return type.transform(new DataTable(raw, tableConverter));
+            }
+        });
     }
 
-    private Expression createExpression(String expressionString, TableType tableType) {
+    private Expression createExpression(String expressionString, Transformer<List<List<String>>, ?> tableType) {
         Matcher m = BEGIN_ANCHOR.matcher(expressionString);
         if (m.find()) {
             return new RegularExpression(Pattern.compile(expressionString), tableType, parameterTypeRegistry);

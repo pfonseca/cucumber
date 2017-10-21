@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 public class RegularExpression implements Expression {
     private final Pattern expressionRegexp;
     private final ParameterTypeRegistry parameterTypeRegistry;
+    private final Transformer<List<List<String>>, ?> tableType;
     private TreeRegexp treeRegexp;
 
     /**
@@ -17,14 +18,15 @@ public class RegularExpression implements Expression {
      * @param tableType
      * @param parameterTypeRegistry used to look up parameter types
      */
-    public RegularExpression(Pattern expressionRegexp, TableType tableType, ParameterTypeRegistry parameterTypeRegistry) {
+    public RegularExpression(Pattern expressionRegexp, Transformer<List<List<String>>,?> tableType, ParameterTypeRegistry parameterTypeRegistry) {
         this.expressionRegexp = expressionRegexp;
         this.parameterTypeRegistry = parameterTypeRegistry;
         treeRegexp = new TreeRegexp(expressionRegexp);
+        this.tableType = tableType;
     }
 
     @Override
-    public List<Argument<?>> match(String text, DataTable arguments) {
+    public List<Argument<?>> match(String text, List<List<String>> tableArgument) {
         List<ParameterType<?>> parameterTypes = new ArrayList<>();
         for(GroupBuilder groupBuilder : treeRegexp.getGroupBuilder().getChildren()){
             String parameterTypeRegexp = groupBuilder.getSource();
@@ -44,7 +46,17 @@ public class RegularExpression implements Expression {
             parameterTypes.add(parameterType);
         }
 
-        return ExpressionArgument.build(treeRegexp, parameterTypes, text);
+        List<Argument<?>> list = ExpressionArgument.build(treeRegexp, parameterTypes, text);
+
+        if (list == null) {
+            return null;
+        }
+
+        if (tableArgument != null) {
+            list.add(new TableArgument<>(tableType, tableArgument));
+        }
+
+        return list;
     }
 
 
