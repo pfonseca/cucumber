@@ -1,6 +1,6 @@
 package io.cucumber.cucumberexpressions;
 
-public class SingleTransformer<T> implements Transformer<String[], T> {
+public class SingleTransformer<T> implements ParameterTransformer<T> {
     private final Function<String, T> function;
 
     public SingleTransformer(Function<String, T> function) {

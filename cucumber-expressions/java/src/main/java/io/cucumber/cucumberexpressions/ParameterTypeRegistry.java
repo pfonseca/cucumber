@@ -1,7 +1,5 @@
 package io.cucumber.cucumberexpressions;
 
-import io.cucumber.datatable.DataTable;
-
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -12,7 +10,7 @@ import java.util.regex.Pattern;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
-public class ParameterTypeRegistry {
+public final class ParameterTypeRegistry {
     private static final List<String> INTEGER_REGEXPS = asList("-?\\d+", "\\d+");
     private static final List<String> FLOAT_REGEXPS = singletonList("-?\\d*[\\.,]\\d+");
     private static final List<String> HEX_REGEXPS = singletonList("0[xX][0-9a-fA-F]{2}");
@@ -22,8 +20,6 @@ public class ParameterTypeRegistry {
     private final Map<String, ParameterType<?>> parameterTypeByName = new HashMap<>();
     private final Map<String, SortedSet<ParameterType<?>>> parameterTypesByRegexp = new HashMap<>();
     private final Map<Type, ParameterType<?>> parameterTypeByType = new HashMap<>(); //TODO: Should be Map<Type, List<ParameterType<?>>
-    private final Map<String, TableType<?>> tableTypeByName = new HashMap<>();
-    private final Map<String, TableType<?>> tableTypeByType = new HashMap<>(); //TODO: Should be Map<String, List<TableType<?>>
 
     public ParameterTypeRegistry(Locale locale) {
         NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
@@ -90,13 +86,6 @@ public class ParameterTypeRegistry {
             }
         }), true, false));
 
-        defineDataTableType(new TableType<>("table", DataTable.class, new Transformer<DataTable, DataTable>() {
-            @Override
-            public DataTable transform(DataTable t) {
-                return t;
-            }
-        }));
-
     }
 
     public void defineParameterType(ParameterType<?> parameterType) {
@@ -121,14 +110,6 @@ public class ParameterTypeRegistry {
         }
     }
 
-    public void defineDataTableType(TableType<?> tableType) {
-        if (tableTypeByName.containsKey(tableType.getName()))
-            throw new DuplicateTypeNameException(String.format("There is already a data table type with name %s", tableType.getName()));
-
-        tableTypeByName.put(tableType.getName(), tableType);
-        tableTypeByType.put(tableType.getType().toString(), tableType);
-    }
-
     public <T> ParameterType<T> lookupByTypeName(String typeName) {
         return (ParameterType<T>) parameterTypeByName.get(typeName);
     }
@@ -137,16 +118,6 @@ public class ParameterTypeRegistry {
         // TODO: Disamiguation
         return (ParameterType<T>) parameterTypeByType.get(type);
     }
-
-    public <T> TableType<T> lookupTableTypeByType(final Type tableType) {
-        return (TableType<T>)  tableTypeByType.get(tableType.toString());
-    }
-
-
-    public <T> TableType<T> lookupTableTypeByName(String tableType) {
-        return (TableType<T>) tableTypeByName.get(tableType);
-    }
-
 
     public <T> ParameterType<T> lookupByRegexp(String parameterTypeRegexp, Pattern expressionRegexp, String text) {
         SortedSet<ParameterType<?>> parameterTypes = parameterTypesByRegexp.get(parameterTypeRegexp);
@@ -164,6 +135,7 @@ public class ParameterTypeRegistry {
     public Collection<ParameterType<?>> getParameterTypes() {
         return parameterTypeByName.values();
     }
+
 }
 
 

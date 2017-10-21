@@ -26,8 +26,8 @@ public class GenericParameterTypeTest {
                 }),
                 false,
                 false));
-        Expression expression = new CucumberExpression("I have {stringlist} yay", null, parameterTypeRegistry);
-        List<Argument<?>> args = expression.match("I have three,blind,mice yay", null);
+        Expression expression = new CucumberExpression("I have {stringlist} yay", parameterTypeRegistry);
+        List<Argument<?>> args = expression.match("I have three,blind,mice yay");
         assertEquals(asList("three", "blind", "mice"), args.get(0).getValue());
     }
 }

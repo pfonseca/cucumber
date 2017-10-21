@@ -1,9 +1,9 @@
-package io.cucumber.datatable;
+package io.cucumber.java;
 
 import io.cucumber.cucumberexpressions.CucumberExpressionException;
+import io.cucumber.datatable.DataTableType;
 import io.cucumber.cucumberexpressions.ParameterType;
-import io.cucumber.cucumberexpressions.ParameterTypeRegistry;
-import io.cucumber.cucumberexpressions.TableType;
+import io.cucumber.datatable.DataTable;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.reflect.Type;
@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.cucumber.cucumberexpressions.TableType.aListOf;
+import static io.cucumber.datatable.DataTableType.aListOf;
 import static io.cucumber.cucumberexpressions.TypeUtils.listItemType;
 import static io.cucumber.cucumberexpressions.TypeUtils.mapKeyType;
 import static io.cucumber.cucumberexpressions.TypeUtils.mapValueType;
@@ -21,11 +21,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
-public final class ParameterTypeRegistryTableConverter implements io.cucumber.datatable.TableConverter {
+public final class TypeRegistryTableConverter implements io.cucumber.datatable.TableConverter {
 
-    private final ParameterTypeRegistry registry;
+    private final TypeRegistry registry;
 
-    public ParameterTypeRegistryTableConverter(ParameterTypeRegistry registry) {
+    public TypeRegistryTableConverter(TypeRegistry registry) {
         this.registry = registry;
 
     }
@@ -44,9 +44,9 @@ public final class ParameterTypeRegistryTableConverter implements io.cucumber.da
             return (T) dataTable;
         }
 
-        TableType<T> tableType = registry.lookupTableTypeByType(type);
+        DataTableType<T> tableType = registry.lookupTableTypeByType(type);
         if (tableType != null) {
-            return tableType.transform(dataTable);
+            return tableType.transform(dataTable.cells());
         }
 
         Type mapKeyType = mapKeyType(type);
@@ -93,12 +93,12 @@ public final class ParameterTypeRegistryTableConverter implements io.cucumber.da
         if (itemType == null) throw new CucumberExpressionException("itemType may not be null");
 
 
-        TableType<List<T>> tableType = registry.lookupTableTypeByType(aListOf(itemType));
+        DataTableType<List<T>> tableType = registry.lookupTableTypeByType(aListOf(itemType));
         if (tableType != null) {
-            return unmodifiableList(tableType.transform(dataTable));
+            return unmodifiableList(tableType.transform(dataTable.cells()));
         }
 
-        ParameterType<T> parameterType = registry.lookupByType(itemType);
+        ParameterType<T> parameterType = registry.lookupParameterTypeByType(itemType);
         if (parameterType != null) {
             return toList(dataTable, parameterType);
         }
@@ -122,7 +122,7 @@ public final class ParameterTypeRegistryTableConverter implements io.cucumber.da
         if (dataTable == null) throw new CucumberExpressionException("dataTable may not be null");
         if (itemType == null) throw new CucumberExpressionException("itemType may not be null");
 
-        ParameterType<T> parameterType = registry.lookupByType(itemType);
+        ParameterType<T> parameterType = registry.lookupParameterTypeByType(itemType);
         if (parameterType != null) {
             return toLists(dataTable, parameterType);
         }
@@ -148,8 +148,8 @@ public final class ParameterTypeRegistryTableConverter implements io.cucumber.da
         if (keyType == null) throw new CucumberExpressionException("keyType may not be null");
         if (valueType == null) throw new CucumberExpressionException("valueType may not be null");
 
-        ParameterType<K> keyConverter = registry.lookupByType(keyType);
-        ParameterType<V> valueConverter = registry.lookupByType(valueType);
+        ParameterType<K> keyConverter = registry.lookupParameterTypeByType(keyType);
+        ParameterType<V> valueConverter = registry.lookupParameterTypeByType(valueType);
 
         if (keyConverter == null || valueConverter == null) {
             throw new CucumberExpressionException(String.format("Can't convert DataTable to Map<%s,%s>", keyType, valueType));
@@ -173,8 +173,8 @@ public final class ParameterTypeRegistryTableConverter implements io.cucumber.da
         if (keyType == null) throw new CucumberExpressionException("keyType may not be null");
         if (valueType == null) throw new CucumberExpressionException("valueType may not be null");
 
-        ParameterType<K> keyConverter = registry.lookupByType(keyType);
-        ParameterType<V> valueConverter = registry.lookupByType(valueType);
+        ParameterType<K> keyConverter = registry.lookupParameterTypeByType(keyType);
+        ParameterType<V> valueConverter = registry.lookupParameterTypeByType(valueType);
 
 
         if (keyConverter == null || valueConverter == null) {

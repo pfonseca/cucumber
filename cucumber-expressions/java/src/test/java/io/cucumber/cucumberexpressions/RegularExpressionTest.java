@@ -20,8 +20,8 @@ public class RegularExpressionTest {
 
         /// [capture-match-arguments]
         Pattern expr = Pattern.compile("I have (\\d+) cukes? in my (\\w+) now");
-        Expression expression = new RegularExpression(expr, null, parameterTypeRegistry);
-        List<Argument<?>> match = expression.match("I have 7 cukes in my belly now", null);
+        Expression expression = new RegularExpression(expr, parameterTypeRegistry);
+        List<Argument<?>> match = expression.match("I have 7 cukes in my belly now");
         assertEquals(7, match.get(0).getValue());
         assertEquals("belly", match.get(1).getValue());
         /// [capture-match-arguments]
@@ -58,13 +58,13 @@ public class RegularExpressionTest {
         String expr = "Across the line\\(s\\)";
         String step = "Across the line(s)";
         List<?> match = match(compile(expr), step);
-        assertEquals(emptyList (), match);
+        assertEquals(emptyList(), match);
     }
 
     @Test
     public void exposes_source_and_regexp() {
         String regexp = "I have (\\d+) cukes? in my (.+) now";
-        RegularExpression expression = new RegularExpression(Pattern.compile(regexp), null, new ParameterTypeRegistry(Locale.ENGLISH));
+        RegularExpression expression = new RegularExpression(Pattern.compile(regexp), new ParameterTypeRegistry(Locale.ENGLISH));
         assertEquals(regexp, expression.getSource());
         assertEquals(regexp, expression.getRegexp().pattern());
     }
@@ -75,8 +75,8 @@ public class RegularExpressionTest {
 
     private List<?> match(Pattern pattern, String text, Locale locale) {
         ParameterTypeRegistry parameterTypeRegistry = new ParameterTypeRegistry(locale);
-        RegularExpression regularExpression = new RegularExpression(pattern, null, parameterTypeRegistry);
-        List<Argument<?>> arguments = regularExpression.match(text, null);
+        RegularExpression regularExpression = new RegularExpression(pattern, parameterTypeRegistry);
+        List<Argument<?>> arguments = regularExpression.match(text);
         List<Object> values = new ArrayList<>();
         for (Argument<?> argument : arguments) {
             values.add(argument.getValue());

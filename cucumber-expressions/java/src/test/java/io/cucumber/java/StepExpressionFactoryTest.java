@@ -1,26 +1,26 @@
-package io.cucumber.datatable;
+package io.cucumber.java;
 
 import io.cucumber.cucumberexpressions.Argument;
-import io.cucumber.cucumberexpressions.Expression;
-import io.cucumber.cucumberexpressions.ExpressionFactory;
 import io.cucumber.cucumberexpressions.ParameterType;
-import io.cucumber.cucumberexpressions.ParameterTypeRegistry;
-import io.cucumber.cucumberexpressions.Transformer;
+import io.cucumber.datatable.TableRowTransformer;
+import io.cucumber.datatable.TableTransformer;
+import io.cucumber.datatable.DataTable;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static io.cucumber.cucumberexpressions.TableType.tableAs;
-import static io.cucumber.cucumberexpressions.TableType.tableOf;
+import static io.cucumber.datatable.DataTableType.tableAs;
+import static io.cucumber.datatable.DataTableType.tableOf;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
-public class DataTableTest {
+public class StepExpressionFactoryTest {
     static class Ingredient {
         String name;
         Integer amount;
@@ -30,21 +30,21 @@ public class DataTableTest {
         }
     }
 
-    private final ParameterTypeRegistry registry = new ParameterTypeRegistry(Locale.ENGLISH);
+    private final TypeRegistry registry = new TypeRegistry(Locale.ENGLISH);
     private final List<List<String>> table = asList(asList("name", "amount", "unit"), asList("chocolate", "2", "tbsp"));
     private final List<List<String>> tableTransposed = asList(asList("name", "chocolate"), asList("amount", "2"), asList("unit", "tbsp"));
 
 
-    private Transformer<Map<String, String>, Ingredient> beanMapper(final ParameterTypeRegistry registry) {
+    private TableRowTransformer<Ingredient> listBeanMapper(final TypeRegistry registry) {
         //Just pretend this is a bean mapper.
-        return new Transformer<Map<String, String>, Ingredient>() {
+        return new TableRowTransformer<Ingredient>() {
 
             @Override
             public Ingredient transform(Map<String, String> tableRow) {
                 Ingredient bean = new Ingredient();
-                ParameterType<Integer> intType = registry.lookupByType(Integer.class);
+                ParameterType<Integer> intType = registry.lookupParameterTypeByType(Integer.class);
                 bean.amount = intType.transform(singletonList(tableRow.get("amount")));
-                ParameterType<String> stringType = registry.lookupByType(String.class);
+                ParameterType<String> stringType = registry.lookupParameterTypeByType(String.class);
                 bean.name = stringType.transform(singletonList(tableRow.get("name")));
                 bean.unit = stringType.transform(singletonList(tableRow.get("unit")));
                 return bean;
@@ -52,47 +52,47 @@ public class DataTableTest {
         };
     }
 
-    @Test
-    public void table_expression_with_name_creates_table_from_table() {
 
-
-        Expression expression = new ExpressionFactory(registry).createExpression("Given some stuff:", "table");
-
-        List<Argument<?>> match = expression.match("Given some stuff:", table);
-
-        DataTable dataTable = (DataTable) match.get(0).getValue();
-        assertEquals(dataTable.asMaps().get(0).get("name"), "chocolate");
+    private TableTransformer<Ingredient> beanMapper(final TypeRegistry registry) {
+        return new TableTransformer<Ingredient>() {
+            @Override
+            public Ingredient transform(DataTable table) {
+                Map<String, String> tableRow = table.transpose().asMaps().get(0);
+                return listBeanMapper(registry).transform(tableRow);
+            }
+        };
     }
+
 
     @Test
     public void table_expression_with_type_creates_table_from_table() {
 
-        Expression expression = new ExpressionFactory(registry).createExpression("Given some stuff:", DataTable.class);
+        StepExpression expression = new StepExpressionFactory(registry).createExpression("Given some stuff:", DataTable.class);
 
 
         List<Argument<?>> match = expression.match("Given some stuff:", table);
 
         DataTable dataTable = (DataTable) match.get(0).getValue();
-        assertEquals(dataTable.asMaps().get(0).get("name"), "chocolate");
+        assertEquals(table, dataTable.cells());
     }
 
     @Test
     public void table_expression_with_name_creates_single_ingredients_from_table() {
-        ParameterTypeRegistry registry = new ParameterTypeRegistry(Locale.ENGLISH);
         registry.defineDataTableType(tableAs("ingredient", Ingredient.class, beanMapper(registry)));
 
-        Expression expression = new ExpressionFactory(registry).createExpression("Given some stuff:", "ingredient");
+        StepExpression expression = new StepExpressionFactory(registry).createExpression("Given some stuff:", "ingredient");
 
         List<Argument<?>> match = expression.match("Given some stuff:", tableTransposed);
         Ingredient ingredient = (Ingredient) match.get(0).getValue();
         assertEquals(ingredient.name, "chocolate");
     }
 
+
     @Test
     public void table_expression_with_type_creates_single_ingredients_from_table() {
 
         registry.defineDataTableType(tableAs("ingredient", Ingredient.class, beanMapper(registry)));
-        Expression expression = new ExpressionFactory(registry).createExpression("Given some stuff:", Ingredient.class);
+        StepExpression expression = new StepExpressionFactory(registry).createExpression("Given some stuff:", Ingredient.class);
         List<Argument<?>> match = expression.match("Given some stuff:", tableTransposed);
 
 
@@ -104,8 +104,8 @@ public class DataTableTest {
     @Test
     public void table_expression_with_name_creates_list_of_ingredients_from_table() {
 
-        registry.defineDataTableType(tableOf("ingredients", Ingredient.class, beanMapper(registry)));
-        Expression expression = new ExpressionFactory(registry).createExpression("Given some stuff:", "ingredients");
+        registry.defineDataTableType(tableOf("ingredients", Ingredient.class, listBeanMapper(registry)));
+        StepExpression expression = new StepExpressionFactory(registry).createExpression("Given some stuff:", "ingredients");
 
         List<Argument<?>> match = expression.match("Given some stuff:", table);
 
@@ -118,9 +118,9 @@ public class DataTableTest {
     @Test
     public void table_expression_with_list_type_creates_list_of_ingredients_from_table() {
 
-        registry.defineDataTableType(tableOf("ingredients", Ingredient.class, beanMapper(registry)));
+        registry.defineDataTableType(tableOf("ingredients", Ingredient.class, listBeanMapper(registry)));
 
-        Expression expression = new ExpressionFactory(registry).createExpression("Given some stuff:", getTypeFromStepDefinition());
+        StepExpression expression = new StepExpressionFactory(registry).createExpression("Given some stuff:", getTypeFromStepDefinition());
         List<Argument<?>> match = expression.match("Given some stuff:", table);
 
         List<Ingredient> ingredients = (List<Ingredient>) match.get(0).getValue();

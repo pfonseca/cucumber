@@ -65,8 +65,8 @@ public class CustomParameterTypeTest {
 
     @Test
     public void matches_CucumberExpression_parameters_with_custom_parameter_type() {
-        Expression expression = new CucumberExpression("I have a {color} ball", null, parameterTypeRegistry);
-        Object argumentValue = expression.match("I have a red ball", null).get(0).getValue();
+        Expression expression = new CucumberExpression("I have a {color} ball", parameterTypeRegistry);
+        Object argumentValue = expression.match("I have a red ball").get(0).getValue();
         assertEquals(new Color("red"), argumentValue);
     }
 
@@ -76,7 +76,7 @@ public class CustomParameterTypeTest {
         parameterTypeRegistry.defineParameterType(new ParameterType<>(
                 "coordinate",
                 "(\\d+),\\s*(\\d+),\\s*(\\d+)",
-                Coordinate.class, new Transformer<String[], Coordinate>() {
+                Coordinate.class, new ParameterTransformer<Coordinate>() {
             @Override
             public Coordinate transform(String... xyz) {
                 return new Coordinate(
@@ -88,8 +88,8 @@ public class CustomParameterTypeTest {
                 false,
                 false
         ));
-        Expression expression = new CucumberExpression("A {int} thick line from {coordinate} to {coordinate}", null, parameterTypeRegistry);
-        List<Argument<?>> arguments = expression.match("A 5 thick line from 10,20,30 to 40,50,60", null);
+        Expression expression = new CucumberExpression("A {int} thick line from {coordinate} to {coordinate}", parameterTypeRegistry);
+        List<Argument<?>> arguments = expression.match("A 5 thick line from 10,20,30 to 40,50,60");
         Integer thick = (Integer) arguments.get(0).getValue();
         Coordinate from = (Coordinate) arguments.get(1).getValue();
         Coordinate to = (Coordinate) arguments.get(2).getValue();
@@ -114,8 +114,8 @@ public class CustomParameterTypeTest {
                 false,
                 false
         ));
-        Expression expression = new CucumberExpression("I have a {color} ball", null, parameterTypeRegistry);
-        Object argumentValue = expression.match("I have a dark red ball", null).get(0).getValue();
+        Expression expression = new CucumberExpression("I have a {color} ball",  parameterTypeRegistry);
+        Object argumentValue = expression.match("I have a dark red ball").get(0).getValue();
         assertEquals(new Color("dark red"), argumentValue);
     }
 
@@ -125,7 +125,7 @@ public class CustomParameterTypeTest {
                 "throwing",
                 "bad",
                 CssColor.class,
-                new Transformer<String[], CssColor>() {
+                new ParameterTransformer<CssColor>() {
                     @Override
                     public CssColor transform(String... color) {
                         throw new RuntimeException(String.format("Can't transform [%s]", color[0]));
@@ -134,8 +134,8 @@ public class CustomParameterTypeTest {
                 false,
                 false
         ));
-        Expression expression = new CucumberExpression("I have a {throwing} parameter", null, parameterTypeRegistry);
-        List<Argument<?>> arguments = expression.match("I have a bad parameter", null);
+        Expression expression = new CucumberExpression("I have a {throwing} parameter", parameterTypeRegistry);
+        List<Argument<?>> arguments = expression.match("I have a bad parameter");
         try {
             arguments.get(0).getValue();
             fail("should have failed");
@@ -201,14 +201,14 @@ public class CustomParameterTypeTest {
                 false
         ));
 
-        assertEquals(new CssColor("blue"), new CucumberExpression("I have a {css-color} ball", null, parameterTypeRegistry).match("I have a blue ball", null).get(0).getValue());
-        assertEquals(new Color("blue"), new CucumberExpression("I have a {color} ball", null, parameterTypeRegistry).match("I have a blue ball", null).get(0).getValue());
+        assertEquals(new CssColor("blue"), new CucumberExpression("I have a {css-color} ball", parameterTypeRegistry).match("I have a blue ball").get(0).getValue());
+        assertEquals(new Color("blue"), new CucumberExpression("I have a {color} ball", parameterTypeRegistry).match("I have a blue ball").get(0).getValue());
     }
 
     @Test
     public void matches_RegularExpression_arguments_with_custom_parameter_type() {
-        Expression expression = new RegularExpression(compile("I have a (red|blue|yellow) ball"), null, parameterTypeRegistry);
-        Object argumentValue = expression.match("I have a red ball", null).get(0).getValue();
+        Expression expression = new RegularExpression(compile("I have a (red|blue|yellow) ball"), parameterTypeRegistry);
+        Object argumentValue = expression.match("I have a red ball").get(0).getValue();
         assertEquals(new Color("red"), argumentValue);
     }
 

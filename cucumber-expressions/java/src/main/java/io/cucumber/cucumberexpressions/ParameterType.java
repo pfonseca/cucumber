@@ -1,19 +1,20 @@
 package io.cucumber.cucumberexpressions;
 
+
 import java.lang.reflect.Type;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public final class ParameterType<T> implements Comparable<ParameterType<?>>, ParameterTransform<List<String>, T> {
+public final class ParameterType<T> implements Comparable<ParameterType<?>> {
     private final String name;
     private final Type type;
     private final List<String> regexps;
     private final boolean preferForRegexpMatch;
     private final boolean useForSnippets;
-    private final Transformer<String[], T> transformer;
+    private final ParameterTransformer<T> transformer;
 
-    public ParameterType(String name, List<String> regexps, Type type, Transformer<String[], T> transformer, boolean useForSnippets, boolean preferForRegexpMatch) {
+    public ParameterType(String name, List<String> regexps, Type type, ParameterTransformer<T> transformer, boolean useForSnippets, boolean preferForRegexpMatch) {
         if (name == null) throw new CucumberExpressionException("name cannot be null");
         if (regexps == null) throw new CucumberExpressionException("regexps cannot be null");
         if (type == null) throw new CucumberExpressionException("type cannot be null");
@@ -26,11 +27,11 @@ public final class ParameterType<T> implements Comparable<ParameterType<?>>, Par
         this.preferForRegexpMatch = preferForRegexpMatch;
     }
 
-    public ParameterType(String name, String regexp, Class<T> type, Transformer<String[], T> transformer, boolean useForSnippets, boolean preferForRegexpMatch) {
+    public ParameterType(String name, String regexp, Class<T> type, ParameterTransformer<T> transformer, boolean useForSnippets, boolean preferForRegexpMatch) {
         this(name, singletonList(regexp), type, transformer, useForSnippets, preferForRegexpMatch);
     }
 
-    public ParameterType(String name, String regexp, Class<T> type, Transformer<String[], T> transformer) {
+    public ParameterType(String name, String regexp, Class<T> type, ParameterTransformer<T> transformer) {
         this(name, singletonList(regexp), type, transformer, true, false);
     }
 
@@ -39,7 +40,6 @@ public final class ParameterType<T> implements Comparable<ParameterType<?>>, Par
      *
      * @return human readable type name
      */
-    @Override
     public String getName() {
         return name;
     }
@@ -52,7 +52,6 @@ public final class ParameterType<T> implements Comparable<ParameterType<?>>, Par
      *
      * @return the type of the parameter type
      */
-    @Override
     public Type getType() {
         return type;
     }
@@ -84,7 +83,6 @@ public final class ParameterType<T> implements Comparable<ParameterType<?>>, Par
         return useForSnippets;
     }
 
-    @Override
     public T transform(List<String> groupValues) {
         String[] groupValueArray = groupValues.toArray(new String[groupValues.size()]);
         return transformer.transform(groupValueArray);

@@ -14,11 +14,9 @@ public class CucumberExpression implements Expression {
     private final List<ParameterType<?>> parameterTypes = new ArrayList<>();
     private final String expression;
     private final TreeRegexp treeRegexp;
-    private final Transformer<List<List<String>>, ?> tableType;
 
-    public CucumberExpression(String expression, Transformer<List<List<String>>, ?> tableType, ParameterTypeRegistry parameterTypeRegistry) {
+    public CucumberExpression(String expression, ParameterTypeRegistry parameterTypeRegistry) {
         this.expression = expression;
-        this.tableType = tableType;
         expression = ESCAPE_PATTERN.matcher(expression).replaceAll("\\\\$1");
         expression = OPTIONAL_PATTERN.matcher(expression).replaceAll("(?:$1)?");
 
@@ -68,17 +66,8 @@ public class CucumberExpression implements Expression {
     }
 
     @Override
-    public List<Argument<?>> match(String text, List<List<String>> tableArgument) {
-        List<Argument<?>> list = ExpressionArgument.build(treeRegexp, parameterTypes, text);
-        if (list == null) {
-            return null;
-        }
-
-        if (tableArgument != null) {
-            list.add(new TableArgument<>(tableType, tableArgument));
-        }
-
-        return list;
+    public List<Argument<?>> match(String text) {
+        return ExpressionArgument.build(treeRegexp, parameterTypes, text);
     }
 
     @Override

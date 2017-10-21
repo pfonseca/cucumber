@@ -1,10 +1,11 @@
-package io.cucumber.datatable;
+package io.cucumber.java;
 
 import io.cucumber.cucumberexpressions.Function;
 import io.cucumber.cucumberexpressions.ParameterType;
-import io.cucumber.cucumberexpressions.ParameterTypeRegistry;
 import io.cucumber.cucumberexpressions.SingleTransformer;
-import io.cucumber.cucumberexpressions.Transformer;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.datatable.TableConverter;
+import io.cucumber.datatable.TableRowTransformer;
 import io.cucumber.cucumberexpressions.TypeReference;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static io.cucumber.cucumberexpressions.TableType.tableOf;
+import static io.cucumber.datatable.DataTableType.tableOf;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -24,13 +25,13 @@ import static java.util.Collections.singletonList;
 import static java.util.Locale.ENGLISH;
 import static org.junit.Assert.assertEquals;
 
-public class ParameterTypeRegistryTableConverterTest {
+public class TypeRegistryTableConverterTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private final ParameterTypeRegistry registry = new ParameterTypeRegistry(ENGLISH);
-    private final TableConverter converter = new ParameterTypeRegistryTableConverter(registry);
+    private final TypeRegistry registry = new TypeRegistry(ENGLISH);
+    private final TableConverter converter = new TypeRegistryTableConverter(registry);
 
 
     //    <T> T convert(DataTable dataTable, Type type, boolean transposed);
@@ -71,7 +72,8 @@ public class ParameterTypeRegistryTableConverterTest {
                 singletonList(
                         singletonList("42")
                 ));
-        converter.convert(table, new TypeReference<List<Animal>>() {}.getType(), false);
+        converter.convert(table, new TypeReference<List<Animal>>() {
+        }.getType(), false);
     }
 
 
@@ -85,7 +87,8 @@ public class ParameterTypeRegistryTableConverterTest {
                         singletonList("7")
                 ));
         assertEquals(asList(3, 5, 6, 7), converter.toList(table, Integer.class));
-        assertEquals(asList(3, 5, 6, 7), converter.convert(table, new TypeReference<List<Integer>>() {}.getType(), false));
+        assertEquals(asList(3, 5, 6, 7), converter.convert(table, new TypeReference<List<Integer>>() {
+        }.getType(), false));
     }
 
 
@@ -97,7 +100,8 @@ public class ParameterTypeRegistryTableConverterTest {
                         asList("6", "7")
                 ));
         assertEquals(asList(3, 5, 6, 7), converter.toList(table, Integer.class));
-        assertEquals(asList(3, 5, 6, 7), converter.convert(table, new TypeReference<List<Integer>>() {}.getType(), false));
+        assertEquals(asList(3, 5, 6, 7), converter.convert(table, new TypeReference<List<Integer>>() {
+        }.getType(), false));
 
     }
 
@@ -111,10 +115,12 @@ public class ParameterTypeRegistryTableConverterTest {
             }
         })));
 
-        registry.defineDataTableType(tableOf("animal", Animal.class, new Transformer<Map<String, String>, Animal>() {
+        registry.defineDataTableType(tableOf("animal", Animal.class, new TableRowTransformer<Animal>() {
+
             @Override
             public Animal transform(Map<String, String> values) {
-                ParameterType<Integer> parameterType = registry.lookupByType(Integer.class);
+                ParameterType<Integer> parameterType = registry.lookupParameterTypeByType(Integer.class);
+
                 return new Animal(values.get("name"), parameterType.transform(singletonList(values.get("life expectancy"))));
             }
         }));
@@ -125,15 +131,16 @@ public class ParameterTypeRegistryTableConverterTest {
         ));
 
         assertEquals(singletonList(new Animal("Muffalo", 15)), converter.toList(table, Animal.class));
-        assertEquals(singletonList(new Animal("Muffalo", 15)), converter.convert(table, new TypeReference<List<Animal>>() {}.getType(), false));
+        assertEquals(singletonList(new Animal("Muffalo", 15)), converter.convert(table, new TypeReference<List<Animal>>() {
+        }.getType(), false));
     }
 
 
     @Test
     public void converts_table_to_list_of_generic_item_type() {
-        registry.defineDataTableType(tableOf("muffalo-barn", Barn.class, new Transformer<Map<String, String>, Barn>() {
+        registry.defineDataTableType(tableOf("muffalo-barn", Barn.class, new TableRowTransformer<Barn>() {
             @Override
-            public Barn transform(Map<String, String> values) {
+            public Barn transform(Map<String, String> row) {
                 return new Barn<>(new Animal("Muffalo", 15));
             }
         }));
@@ -144,7 +151,8 @@ public class ParameterTypeRegistryTableConverterTest {
         ));
 
         assertEquals(singletonList(new Barn<>(new Animal("Muffalo", 15))), converter.toList(table, Barn.class));
-        assertEquals(singletonList(new Barn<>(new Animal("Muffalo", 15))), converter.convert(table, new TypeReference<List<Barn<Animal>>>() {}.getType(), false));
+        assertEquals(singletonList(new Barn<>(new Animal("Muffalo", 15))), converter.convert(table, new TypeReference<List<Barn<Animal>>>() {
+        }.getType(), false));
     }
 
 
@@ -154,14 +162,16 @@ public class ParameterTypeRegistryTableConverterTest {
     public void converts_empty_table_to_empty_lists() {
         DataTable table = new DataTable(Collections.<List<String>>emptyList());
         assertEquals(emptyList(), converter.toLists(table, Integer.class));
-        assertEquals(emptyList(), converter.convert(table, new TypeReference<List<List<Integer>>>() {}.getType(), false));
+        assertEquals(emptyList(), converter.convert(table, new TypeReference<List<List<Integer>>>() {
+        }.getType(), false));
     }
 
     @Test
     public void converts_table_with_empty_row_to_list_of_empty_lists() {
         DataTable table = new DataTable(singletonList(Collections.<String>emptyList()));
         assertEquals(singletonList(emptyList()), converter.toLists(table, Integer.class));
-        assertEquals(singletonList(emptyList()), converter.convert(table, new TypeReference<List<List<Integer>>>() {}.getType(), false));
+        assertEquals(singletonList(emptyList()), converter.convert(table, new TypeReference<List<List<Integer>>>() {
+        }.getType(), false));
     }
 
 
@@ -182,7 +192,8 @@ public class ParameterTypeRegistryTableConverterTest {
                 singletonList(7));
 
         assertEquals(expected, converter.toLists(table, Integer.class));
-        assertEquals(expected, converter.convert(table, new TypeReference<List<List<Integer>>>() {}.getType(), false));
+        assertEquals(expected, converter.convert(table, new TypeReference<List<List<Integer>>>() {
+        }.getType(), false));
     }
 
     @Test
@@ -198,7 +209,8 @@ public class ParameterTypeRegistryTableConverterTest {
                 asList(6, 7));
 
         assertEquals(expected, converter.toLists(table, Integer.class));
-        assertEquals(expected, converter.convert(table, new TypeReference<List<List<Integer>>>() {}.getType(), false));
+        assertEquals(expected, converter.convert(table, new TypeReference<List<List<Integer>>>() {
+        }.getType(), false));
     }
 
     @Test
@@ -222,7 +234,8 @@ public class ParameterTypeRegistryTableConverterTest {
 
 
         expectedException.expectMessage(String.format("Can't convert DataTable to List<List<%s>>", Animal.class));
-        converter.convert(table, new TypeReference<List<List<Animal>>>() {}.getType(), false);
+        converter.convert(table, new TypeReference<List<List<Animal>>>() {
+        }.getType(), false);
     }
 
 

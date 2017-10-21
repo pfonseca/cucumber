@@ -1,12 +1,12 @@
 package io.cucumber.datatable;
 
-import io.cucumber.cucumberexpressions.CucumberExpressionException;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 public final class DataTable {
     private final List<List<String>> raw;
@@ -19,7 +19,7 @@ public final class DataTable {
 
 
     public DataTable(List<List<String>> raw, TableConverter tableConverter) {
-        if (raw == null) throw new CucumberExpressionException("cells can not be null");
+        if (raw == null) throw new CucumberDataTableException("cells can not be null");
         this.raw = raw;
         this.tableConverter = tableConverter;
     }
@@ -63,6 +63,30 @@ public final class DataTable {
         return new DataTable(transposed, tableConverter);
     }
 
+    public List<List<String>> asLists(){
+        //TODO: Implement
+        return null;
+    }
+
+    public List<Map<String, String>> asMaps() {
+        //TODO: Make immutable
+        if (raw.isEmpty()) return emptyList();
+
+        List<String> headers = raw.get(0);
+        List<Map<String, String>> headersAndRows = new ArrayList<>();
+
+        for (int i = 1; i < raw.size(); i++) {
+            List<String> row = raw.get(i);
+            LinkedHashMap<String, String> headersAndRow = new LinkedHashMap<>();
+            for (int j = 0; j < headers.size(); j++) {
+                headersAndRow.put(headers.get(j), row.get(j));
+            }
+            headersAndRows.add(headersAndRow);
+        }
+
+        return headersAndRows;
+    }
+
 
 
     public <T> T convert(Type type, boolean transposed) {
@@ -85,53 +109,36 @@ public final class DataTable {
         return tableConverter.toMaps(this, keyType, valueType);
     }
 
-    public List<Map<String, String>> asMaps() {
-        List<String> headers = topRow();
-        List<List<String>> rows = rows(1);
-
-
-        List<Map<String, String>> headersAndRows = new ArrayList<>();
-        for (List<String> row : rows) {
-            LinkedHashMap<String, String> headersAndRow = new LinkedHashMap<>();
-            for (int i = 0; i < headers.size(); i++) {
-                headersAndRow.put(headers.get(i), row.get(i));
-            }
-            headersAndRows.add(headersAndRow);
-        }
-
-        return headersAndRows;
-    }
-
     private static final class NoConverterDefined implements TableConverter {
 
         @Override
         public <T> T convert(DataTable dataTable, Type type, boolean transposed) {
-            throw new CucumberExpressionException(String.format("Can't convert DataTable to %s. DataTable was created without a converter", type));
+            throw new CucumberDataTableException(String.format("Can't convert DataTable to %s. DataTable was created without a converter", type));
         }
 
         @Override
         public <T> List<T> toList(DataTable dataTable, Type itemType) {
-            throw new CucumberExpressionException(String.format("Can't convert DataTable to List<%s>. DataTable was created without a converter", itemType));
+            throw new CucumberDataTableException(String.format("Can't convert DataTable to List<%s>. DataTable was created without a converter", itemType));
         }
 
         @Override
         public <T> List<List<T>> toLists(DataTable dataTable, Type itemType) {
-            throw new CucumberExpressionException(String.format("Can't convert DataTable to List<List<%s>>. DataTable was created without a converter", itemType));
+            throw new CucumberDataTableException(String.format("Can't convert DataTable to List<List<%s>>. DataTable was created without a converter", itemType));
         }
 
         @Override
         public <K, V> Map<K, V> toMap(DataTable dataTable, Type keyType, Type valueType) {
-            throw new CucumberExpressionException(String.format("Can't convert DataTable to Map<%s,%s>. DataTable was created without a converter", keyType, valueType));
+            throw new CucumberDataTableException(String.format("Can't convert DataTable to Map<%s,%s>. DataTable was created without a converter", keyType, valueType));
         }
 
         @Override
         public <K, V> List<Map<K, V>> toMaps(DataTable dataTable, Type keyType, Type valueType) {
-            throw new CucumberExpressionException(String.format("Can't convert DataTable to List<Map<%s,%s>>. DataTable was created without a converter", keyType, valueType));
+            throw new CucumberDataTableException(String.format("Can't convert DataTable to List<Map<%s,%s>>. DataTable was created without a converter", keyType, valueType));
         }
 
         @Override
         public DataTable toTable(List<?> objects, String... columnNames) {
-            throw new CucumberExpressionException("Can't create a DataTable. DataTable was created without a converter");
+            throw new CucumberDataTableException("Can't create a DataTable. DataTable was created without a converter");
         }
     }
 }
